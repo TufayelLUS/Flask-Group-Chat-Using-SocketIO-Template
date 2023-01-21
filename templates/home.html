@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chatroom</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"
+        integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="container-fluid h-100">
+        <div class="row h-100">
+            <div class="col-12 d-flex flex-column justify-content-center align-items-center">
+                <h4>Join Chatroom</h4>
+                <form>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="join-chatroom">Join Chat</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid h-100 d-none" id="chat-container">
+        <div class="row h-100">
+            <div class="col-9">
+                <div class="d-flex flex-column">
+                    <h4>Chat</h4>
+                    <div id="messages" class="d-flex flex-column justify-content-start align-items-start"
+                        style="height: 80%; overflow-y: scroll;"></div>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="message-input" placeholder="Enter your message">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" id="send-message">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Connect to the server using the socket.io client library
+        const socket = io();
+
+        $("#join-chatroom").click(() => {
+            const username = $("#username").val();
+            if (username == "") {
+                return;
+            }
+            socket.emit("join", { username: username });
+            $("#join-chatroom").addClass("d-none");
+            $("#chat-container").removeClass("d-none");
+        });
+        // Send a message to the server
+        $("#send-message").click(() => {
+            if ($("#message-input").val().trim() == "") {
+                return;
+            }
+            socket.emit("message", { username: $("#username").val(), message: $("#message-input").val() });
+            $("#message-input").val('');
+        });
+        $("#message-input").on('keypress', function (e) {
+            if (e.which == 13) {
+                if ($("#message-input").val().trim() == "") {
+                    return;
+                }
+                socket.emit("message", { username: $("#username").val(), message: $("#message-input").val() });
+                $("#message-input").val('');
+            }
+        });
+
+        // Listen for messages from the server
+        socket.on("message", (data) => {
+            $("#messages").append('<div class="alert alert-primary" role="alert">' + data.username + ": " + data.message + '</div>');
+        });
+    </script>
+</body>
+
+</html>
